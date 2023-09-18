@@ -4,8 +4,8 @@ import threading
 import json
 
 # Define the server's IP address and port
-SERVER_IP = '127.0.0.1'
-SERVER_PORT = 8080
+SERVER_IP = '0.0.0.0'
+SERVER_PORT = 8081
 
 # Create the main application window
 root = tk.Tk()
