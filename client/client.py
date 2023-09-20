@@ -9,13 +9,14 @@ SERVER_PORT = 8081
 # Create the main application window
 root = tk.Tk()
 root.title("Concussion C2 Client")
-root.geometry("400x400")  # Adjust the window size as needed
+root.geometry("700x500")  # Adjust the window size as needed
+root.configure(bg="#000046")
 
 # Define the common color scheme
-primary_color = "#3498db"
-secondary_color = "#2ecc71"
-background_color = "#f2f2f2"
-text_color = "#333333"
+#primary_color = "#3498db"
+#secondary_color = "#2ecc71"
+#background_color = "#000046"
+#text_color = "#00C8FF"
 
 root.configure(bg=background_color)
 
@@ -53,15 +54,15 @@ def send_payload(payload):
         print(f"Server Status: Error - {e}")
 
 # Add Labels and Headings (unchanged)
-main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16, "bold"), bg=primary_color, fg=text_color)
+main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16, "bold"), bg="#000046", fg="#00C8FF")
 main_heading.pack(pady=(20, 10))
 
 # Create a label for the server connection status
-status_label = tk.Label(root, text="Server Status: Not Connected", bg=background_color)
-status_label.pack(pady=10)
+status_label = tk.Label(root, text="Server Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E67B")
+status_label.pack(padx=10, pady=10)
 
 # Enhance Button Styling (unchanged)
-send_button = tk.Button(root, text="Send Command", bg=secondary_color, fg=text_color, command=send_command)
+send_button = tk.Button(root, text="Send Command",font=("Helvetica", 16, "bold"), bg="#00FFEA", fg="#0000A2")
 send_button.pack()
 
 # Run the GUI application
