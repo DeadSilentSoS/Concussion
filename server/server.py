@@ -14,8 +14,17 @@ root.geometry("700x500")
 # Define the common color scheme
 root.configure(bg="#000046")
 
+server_socket = None # Initialize the server socket variable
+accept_thread = None # Initialize the accept_thread variable
+server_started = False # Variable to track whether the server is running or not
+
 # Create a list to keep track of connected clients
 connected_clients = []
+
+# Function to update the text widget with server status and messages
+def update_status(message):
+    text_widget.insert(tk.END, message + "\n")
+    text_widget.see(tk.END)  # Auto-scroll to the end
 
 # Function to send a command to a selected client
 def send_command_to_client():
@@ -62,15 +71,29 @@ def stop_server():
     else:
         update_status("Server is not running.")
 
+def accept_connections():
+    while True:
+        try:
+            client_socket, client_address = server_socket.accept()
+            print(f"Connected to client at {client_address}")
+            update_status(f"Connected to client at {client_address}")
+
+            # Create a thread to handle the client
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+            client_thread.start()
+        except KeyboardInterrupt:
+            update_status("Server is shutting down.")
+            break
+        except Exception as e:
+            update_status(f"Error: {e}")
+
+accept_thread = threading.Thread(target=accept_connections)
+accept_thread.start()
+
 # Function to handle a redirect command
 def handle_redirect(target_ip, target_port):
     global redirect_target
     redirect_target = (target_ip, target_port)
-
-# Function to update the text widget with server status and messages
-def update_status(message):
-    text_widget.insert(tk.END, message + "\n")
-    text_widget.see(tk.END)  # Auto-scroll to the end
 
 # Function to handle a client's connection
 def handle_client(client_socket, client_address):

@@ -69,11 +69,6 @@ def send_request(request):
         # Update connection status when successfully connected
         update_connection_status("Connected to Server")
 
-    except ConnectionError as ce:
-        print(f"Connection Error: {ce}")
-        update_status(f"Connection Error: {ce}")
-        update_connection_status("Connection Error")
-
     except Exception as e:
         print(f"Error: {e}")
         update_status(f"Error: {e}")
