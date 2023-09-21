@@ -21,6 +21,9 @@ root.geometry("700x500")  # Adjust the window size as needed
 # Define the common color scheme
 root.configure(bg="#000046")
 
+def update_connection_status(status):
+    connection_status_label.config(text=f"Connection Status: {status}")
+
 # Function to handle the send command button click
 def send_command():
     command = command_var.get()
@@ -32,6 +35,10 @@ def send_command():
             update_status(f"Redirected to {target_ip}:{target_port}.")
         else:
             send_request(command)
+
+        # Update connection status
+        update_connection_status("Connected to Server")
+
 
 
 # Function to handle a redirect command
@@ -84,8 +91,12 @@ main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16
 main_heading.pack(pady=(20, 10))
 
 # Create a label for the server connection status
-status_label = tk.Label(root, text="Server Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E67B")
+#status_label = tk.Label(root, text="Server Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E67B")
+#status_label.pack(padx=10, pady=10)
+# Create a label for the connection status
+status_label = tk.Label(root, text="Connection Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E678")
 status_label.pack(padx=10, pady=10)
+
 
 # Enhance Button Styling (unchanged)
 send_button = tk.Button(root, text="Send Command",font=("Helvetica", 16, "bold"), bg="#00FFEA", fg="#0000A2")
