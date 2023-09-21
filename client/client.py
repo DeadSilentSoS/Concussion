@@ -24,21 +24,31 @@ root.configure(bg="#000046")
 def update_connection_status(status):
     connection_status_label.config(text=f"Connection Status: {status}")
 
+
 # Function to handle the send command button click
 def send_command():
-    command = command_var.get()
-    if command:
-        if command.startswith("redirect"):
-            # Handle a redirect command
-            redirect_command, target_ip, target_port = command.split(' ')
-            handle_redirect(target_ip, int(target_port))
-            update_status(f"Redirected to {target_ip}:{target_port}.")
-        else:
-            send_request(command)
+    try:
+        command = command_var.get()
+        if command:
+            if command.startswith("redirect"):
+                # Handle a redirect command
+                redirect_command, target_ip, target_port = command.split(' ')
+                handle_redirect(target_ip, int(target_port))
+                update_status(f"Redirected to {target_ip}:{target_port}.")
+            else:
+                send_request(command)
 
-        # Update connection status
-        update_connection_status("Connected to Server")
+            # Update connection status
+            update_connection_status("Connected to Server")
 
+    except ConnectionRefusedError:
+        update_status("Connection refused. Ensure the server is running and the IP/port are correct.")
+        update_connection_status("Connection Refused")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        update_status(f"Error: {e}")
+        update_connection_status("Error Occurred")
 
 
 # Function to handle a redirect command
@@ -57,8 +67,20 @@ def send_request(request):
         response_label.config(text=response_data)
 
         client_socket.close()
+
+        # Update connection status when successfully connected
+        update_connection_status("Connected to Server")
+
+    except ConnectionError as ce:
+        print(f"Connection Error: {ce}")
+        update_status(f"Connection Error: {ce}")
+        update_connection_status("Connection Error")
+
     except Exception as e:
         print(f"Error: {e}")
+        update_status(f"Error: {e}")
+        update_connection_status("Error Occurred")
+
 
 def generate_reverse_shell_payload(ip, port):
     # Implement logic to generate a reverse shell payload
