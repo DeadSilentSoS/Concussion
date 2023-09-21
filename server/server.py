@@ -38,6 +38,7 @@ def start_server():
         accept_thread = threading.Thread(target=accept_connections)
         accept_thread.start()  # Start accepting connections
         server_started = True  # Update the server status
+        server_status.config(text="Server Status: Running")  # Update server status text
 
 def stop_server():
     global server_socket, server_started
@@ -45,24 +46,11 @@ def stop_server():
         server_socket.close()
         server_socket = None
         server_started = False  # Update the server status
+        server_status.config(text="Server Status: Stopped")  # Update server status text
         update_status("Server stopped.")
-    # ... Add any cleanup code here ...
+    else:
+        update_status("Server is not running.")
 
-def accept_connections():
-    while server_started:  # Only run if the server has been started
-        try:
-            client_socket, client_address = server_socket.accept()
-            print(f"Connected to client at {client_address}")
-            update_status(f"Connected to client at {client_address}")
-
-            # Create a thread to handle the client
-            client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
-            client_thread.start()
-        except KeyboardInterrupt:
-            update_status("Server is shutting down.")
-            break
-        except Exception as e:
-            update_status(f"Error: {e}")
 
 # Function to handle a redirect command
 def handle_redirect(target_ip, target_port):
@@ -91,11 +79,11 @@ button_frame = tk.Frame(root, bg="#000046")
 button_frame.pack(fill=tk.BOTH, padx=10, pady=10)
 
 # Start server button
-start_button = tk.Button(button_frame, text="Start Server", font=("Helvetica", 14, "bold"), fg="#0000A2", bg="#00FFEA")
+start_button = tk.Button(button_frame, text="Start Server", font=("Helvetica", 14, "bold"), fg="#004D02", bg="#00F517", command=start_server)
 start_button.pack(side=tk.LEFT, padx=10, pady=10, expand=True, fill='both')
 
 # Stop server button
-stop_button = tk.Button(button_frame, text="Stop Server", font=("Helvetica", 14, "bold"), fg="#000000", bg="#FF0000")
+stop_button = tk.Button(button_frame, text="Stop Server", font=("Helvetica", 14, "bold"), fg="#000000", bg="#FF0000", command=stop_server)
 stop_button.pack(side=tk.LEFT, padx=10, pady=10, expand=True, fill='both')
 
 # Command input field and send button
@@ -121,7 +109,7 @@ def update_status(message):
 
 # Accept incoming connections and start a thread to handle each client
 def accept_connections():
-    while True:  # Always run to accept connections
+    while server_started:  # Only run if the server has been started
         try:
             client_socket, client_address = server_socket.accept()
             print(f"Connected to client at {client_address}")
