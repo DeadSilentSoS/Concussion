@@ -3,7 +3,7 @@ import threading
 import tkinter as tk
 
 # Define the server's IP address and port
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 PORT = 2222
 
 # Create a GUI window using Tkinter
@@ -48,7 +48,7 @@ def send_command_to_client():
 def initialize_server():
     global server_socket
     global HOST, PORT  # Define HOST and PORT as global variables
-    HOST = '127.0.0.1'  # Set the desired IP address
+    HOST = '0.0.0.0'  # Set the desired IP address
     PORT = 2222  # Set the desired port
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))

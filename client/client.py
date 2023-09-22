@@ -36,21 +36,11 @@ def execute_command(command):
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         output, error = process.communicate()
 
-<<<<<<< HEAD
-        response_data = client_socket.recv(1024).decode('utf-8')
-        response_label.config(text=response_data)
-
-        client_socket.close()
-
-        # Update connection status when successfully connected
-        update_connection_status("Connected to Server")
-=======
         # Check if the command was successful
         if process.returncode == 0:
             return f"Command executed successfully:\n\n{output.decode('utf-8')}"
         else:
             return f"Command failed with error:\n\n{error.decode('utf-8')}"
->>>>>>> b159a6c (fixed display)
 
     except Exception as e:
         return f"Error: {e}"
