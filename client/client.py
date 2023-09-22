@@ -73,22 +73,26 @@ def send_response_to_server(response):
     except Exception as e:
         update_response(f"Error sending response to server: {e}")
 
-# Start listening for commands in a separate thread
+# Function to listen for commands from the server
 def listen_for_commands():
     try:
         while True:
             if client_socket is not None:
-                print("Waiting for a command from the server...")
                 command = client_socket.recv(1024).decode('utf-8')
                 if not command:
                     break
-                print(f"Received command from the server: {command}")
 
                 handle_command(command)
-    except Exception as e:
-        print(f"Error during command listening: {e}")
-        update_response(f"Error: {e}")
 
+    except Exception as e:
+        update_response(f"Error in command_listener_thread: {e}")
+        logging.error(f"Error in command_listener_thread: {e}")
+        # You can also choose to terminate the thread or take other actions here
+    finally:
+        # Close the client socket when the thread exits
+        if client_socket is not None:
+            client_socket.close()
+            
 # Print a message when starting to listen for commands
 print("Starting to listen for commands from the server...")
 command_listener_thread = threading.Thread(target=listen_for_commands)

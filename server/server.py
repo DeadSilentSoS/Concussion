@@ -5,7 +5,7 @@ import time
 import logging
 
 # Configure the logging settings
-logging.basicConfig(filename='server_log.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='server_logs.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Define the server's IP address and port
 HOST = '127.0.0.1'
@@ -29,6 +29,30 @@ server_started = False # Variable to track whether the server is running or not
 
 # Create a list to keep track of connected clients
 connected_clients = []
+
+# Create a listbox widget to display connected clients
+client_listbox = tk.Listbox(root, selectmode=tk.SINGLE)  # Example listbox creation
+client_listbox.pack(side=tk.LEFT, padx=10, pady=10)
+
+# Function to add a client to the client listbox
+def add_client_to_listbox(client_socket):
+    client_address = client_socket.getpeername()
+    connected_clients.append(client_socket)
+    client_listbox.insert(tk.END, f"{client_address[0]}:{client_address[1]}")
+
+# Function to remove a client from the client listbox
+def remove_client_from_listbox(client_socket):
+    client_address = client_socket.getpeername()
+    connected_clients.remove(client_socket)
+    client_listbox.delete(0, tk.END)  # Clear the listbox
+    for client in connected_clients:
+        address = client.getpeername()
+        client_listbox.insert(tk.END, f"{address[0]}:{address[1]}")
+
+# Function to handle a client's connection
+def handle_client(client_socket, client_address):
+    # Add the client to the list of connected clients
+    add_client_to_listbox(client_socket)
 
 # Function to update the text widget with server status and messages
 def update_status(message):
@@ -63,7 +87,7 @@ def initialize_server():
 
             # Log the debug message
             logging.info(debug_message)
-            
+
             # Update the text widget with the debug message
             update_status(debug_message)  # Update the server's GUI display
             debug_text_widget.insert(tk.END, debug_message + "\n")
