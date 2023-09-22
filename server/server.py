@@ -1,9 +1,14 @@
 import socket
 import threading
 import tkinter as tk
+import time
+import logging
+
+# Configure the logging settings
+logging.basicConfig(filename='server_log.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Define the server's IP address and port
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 PORT = 2222
 
 # Create a GUI window using Tkinter
@@ -14,18 +19,16 @@ root.geometry("700x500")
 # Define the common color scheme
 root.configure(bg="#000046")
 
+# Example usage:
+logging.info('Server started')
+logging.error('An error occurred')
+
 server_socket = None # Initialize the server socket variable
 accept_thread = None # Initialize the accept_thread variable
 server_started = False # Variable to track whether the server is running or not
 
 # Create a list to keep track of connected clients
 connected_clients = []
-
-# Add these variable definitions
-server_socket = None
-server_started = False
-accept_thread = None
-redirect_target = None
 
 # Function to update the text widget with server status and messages
 def update_status(message):
@@ -48,18 +51,32 @@ def send_command_to_client():
 def initialize_server():
     global server_socket
     global HOST, PORT  # Define HOST and PORT as global variables
-    HOST = '0.0.0.0'  # Set the desired IP address
+    HOST = '127.0.0.1'  # Set the desired IP address
     PORT = 2222  # Set the desired port
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((HOST, PORT))
-    server_socket.listen()
-    debug_message = f"Server is listening on {HOST}:{PORT}"
-    print(debug_message)
-    
-    # Update the text widget with the debug message
-    update_status(debug_message)
-    debug_text_widget.insert(tk.END, debug_message + "\n")
-    debug_text_widget.see(tk.END)  # Scroll to the end of the text widget
+
+    while True:
+        try:
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.bind((HOST, PORT))
+            server_socket.listen()
+            debug_message = f"Server is listening on {HOST}:{PORT}"
+
+            # Log the debug message
+            logging.info(debug_message)
+            
+            # Update the text widget with the debug message
+            update_status(debug_message)  # Update the server's GUI display
+            debug_text_widget.insert(tk.END, debug_message + "\n")
+            debug_text_widget.see(tk.END)  # Scroll to the end of the text widget
+
+            break  # Break out of the loop if binding is successful
+        except OSError as e:
+            if e.errno == 98:  # Address already in use error
+                debug_message = f"Port {PORT} is already in use. Waiting..."
+                update_status(debug_message)  # Update the server's GUI display
+                time.sleep(5)  # Wait for 5 seconds before retrying
+            else:
+                raise e  # Raise other OSError exceptions
 
 # Function to start the server
 def start_server():

