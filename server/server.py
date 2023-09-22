@@ -53,7 +53,13 @@ def initialize_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))
     server_socket.listen()
-    print(f"Server is listening on {HOST}:{PORT}")
+    debug_message = f"Server is listening on {HOST}:{PORT}"
+    print(debug_message)
+    
+    # Update the text widget with the debug message
+    update_status(debug_message)
+    debug_text_widget.insert(tk.END, debug_message + "\n")
+    debug_text_widget.see(tk.END)  # Scroll to the end of the text widget
 
 # Function to start the server
 def start_server():
@@ -157,6 +163,10 @@ send_button.pack(side=tk.LEFT, padx=10, pady=10)
 # Text widget for displaying server status and messages
 text_widget = tk.Text(root, height=15, width=50, fg="#0295FF", bg="#000046")
 text_widget.pack(fill=tk.BOTH, padx=10, pady=10)
+
+# Create a text widget for displaying debug messages
+debug_text_widget = tk.Text(root, height=10, width=50, fg="#FFFFFF", bg="#000046")
+debug_text_widget.pack(fill=tk.BOTH, padx=10, pady=10)
 
 # Accept incoming connections and start a thread to handle each client
 def accept_connections():

